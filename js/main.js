@@ -566,8 +566,6 @@ function connectMouseEvents(){
   }
 }
 
-
-AmCharts.myCurrentPosition;
 AmCharts.myHandleMove = function(event) {
   if (undefined === event.index )
     return;
@@ -614,6 +612,7 @@ function handleSelection(event){
   //console.log("startInSecs: " + startInSecs);
   drawTimeIndicator(startInSecs);
   highlightNoteTimeline(startInSecs,endInSecs);
+  mChart.validateData();
 }
 
 // handle keyboard press event
