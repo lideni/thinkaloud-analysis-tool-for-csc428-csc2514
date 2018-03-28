@@ -14,6 +14,8 @@ var logAudio = [];
 var selection = false;
 var selectedStart, selectedEnd;
 
+var graphLoaded = false; //check if the pitch graph is loaded 
+
 window.onload = function(){
   Tipped.create('.legend-label')
 
@@ -93,6 +95,16 @@ window.onload = function(){
     $('#probDescription').val("");
   });
 
+  $('#highPitch').on('click', function(){
+    highPitchHighlight();
+  });
+  $('#lowPitch').on('click', function(){
+    lowPitchHighlight();
+  });
+  $('#baseline').on('click', function(){
+    baseLineHighlight();
+  });
+
   $('.timeline-outline').mousemove(function (ev) {
     updateOnMouseMove(ev);
   });
@@ -117,6 +129,26 @@ window.onload = function(){
   });
 
   setTranscriptSelectionEventListener();
+};
+
+// hightlight high pitch portions of graph and text 
+// append error message is there a no data to be analyzed 
+function highPitchHighlight(){ 
+  
+
+};
+
+// hightlight low pitch portions of graph and text 
+// append error message is there a no data to be analyzed 
+function lowPitchHighlight(){
+  
+
+};
+
+// hightlight baseline average pitch portions of graph and text 
+// append error message is there a no data to be analyzed 
+function baseLineHighlight(){
+  
 };
 
 function updateOnMouseMove(event) {
@@ -150,17 +182,26 @@ function loadTaskData () {  //load the audio when the UI is displayed
   //check audio's loading status. if it is not ready, load it again
   if (mAudio.readyState >= 2) {
     processAudio();
+
   }
 
   [transcriptData, pitchData] = parseData(task_data.data);
+
 
   setTimeout(myTimer, 500);
   function myTimer() {
     if(pitchData.length != 0 && transcriptData.length != 0)
     {
-      console.log("data is ready...");
+      console.log("data is ready............");
+      graphLoaded = true; 
+      console.log(".....11111.............");
+      console.log(pitchData);
       mChart = drawCharts();
-      drawTranscript();
+      drawTranscript(); 
+      console.log(".....11111.............");
+      console.log(pitchData);
+      console.log("..................");
+      document.getElementById("pitchNum").innerHTML = '<div>' + JSON.stringify(pitchData[2]) + '</div>';
     }
     else {
       setTimeout(myTimer, 500);
@@ -239,6 +280,18 @@ panels: [
   title: "Pitch (HZ)",
   allowTurningOff: false,
   stockGraphs: [ {
+    id: "g1",
+    compareGraphType:"smoothedLine",
+    valueField: "data2",
+    compareField: "data2",
+    comparable: false,
+    visibleInLegend: true,
+    showBalloon: false,
+    //lineColorField: "lineColor",
+    lineColor:"#FF0000",
+    negativeLineColor: "red",
+    negativeBase: 230,
+  },{
     id: "g2",
     compareGraphType:"smoothedLine",
     valueField: "data2",
@@ -246,8 +299,12 @@ panels: [
     comparable: false,
     visibleInLegend: true,
     showBalloon: false,
-    lineColorField: "lineColor",
-  } ],
+    //lineColorField: "lineColor",
+    lineColor:"#FF0000",
+    negativeLineColor: "green",
+    negativeBase: 160,
+  }
+   ],
   stockLegend: {
     enabled: true,
     markType: "none",
