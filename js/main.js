@@ -15,6 +15,10 @@ var selection = false;
 var selectedStart, selectedEnd;
 
 var graphLoaded = false; //check if the pitch graph is loaded 
+var standardDev = 0;
+var totalPitch = 0;
+var pitchMean = 0;
+var totalNumOfPitch = 0;
 
 window.onload = function(){
   Tipped.create('.legend-label')
@@ -192,16 +196,15 @@ function loadTaskData () {  //load the audio when the UI is displayed
   function myTimer() {
     if(pitchData.length != 0 && transcriptData.length != 0)
     {
-      console.log("data is ready............");
+      console.log("data is ready...");
       graphLoaded = true; 
-      console.log(".....11111.............");
-      console.log(pitchData);
+      //console.log(pitchData);
       mChart = drawCharts();
       drawTranscript(); 
-      console.log(".....11111.............");
-      console.log(pitchData);
-      console.log("..................");
-      document.getElementById("pitchNum").innerHTML = '<div>' + JSON.stringify(pitchData[2]) + '</div>';
+      //console.log(transcriptData[90]);
+      //console.log(transcriptData[91]);
+      //console.log(transcriptData[92]);
+      console.log(standardDev);
     }
     else {
       setTimeout(myTimer, 500);
@@ -228,6 +231,7 @@ function processAudio() {
 function parseData(dataset_url) {
   var transcriptData = [];
   var pitchData = [];
+  
   AmCharts.loadFile(dataset_url, {}, function(data) {
     inputdata = AmCharts.parseJSON(data);
     for(var i = 0; i < inputdata.length; i++){
@@ -242,15 +246,40 @@ function parseData(dataset_url) {
       for(var j = 0; j < temppitchData.length; j++){
         var time = start + j * (end - start) / temppitchData.length;
         pitchData.push({"time": time, "data":parseFloat(temppitchData[j]), "legendColor": AmCharts.randomColor, "label": "undefined"});
+        totalPitch += parseFloat(temppitchData[j]);
+        totalNumOfPitch +=1;
       }
+    }
 
-    }});
+    standardDev = calculateStandardDeviation(totalPitch, totalNumOfPitch, inputdata);
+    console.log("SD: " + standardDev);
+  });
   return [transcriptData, pitchData];
+}
+
+function calculateStandardDeviation(totalPitch, totalNumOfPitch, inputdata){
+  var totalXMinMeanSq = 0;
+
+  pitchMean = totalPitch / totalNumOfPitch;
+  console.log("pitchMean: " + pitchMean);
+
+  for(var x = 0; x < inputdata.length; x++){
+    var temppitchData = inputdata[x].pitch;
+    for(var i = 0; i < temppitchData.length; i++){
+      totalXMinMeanSq += (parseFloat(temppitchData[i]) - pitchMean) * (parseFloat(temppitchData[i]) - pitchMean);
+    }
+  }
+
+  return Math.sqrt(totalXMinMeanSq / (totalNumOfPitch - 1));
 }
 
 //draw a line graph of the feature (e.g., pitch)
 function drawCharts(){
   var chart = null;
+  var highBound = pitchMean + standardDev;
+  var lowBound =  pitchMean - standardDev;
+  console.log("high: " + highBound);
+  console.log("lowBound: " + lowBound);
   chart = AmCharts.makeChart("chartdiv", {
     type: "stock",
     "theme": "light",
@@ -290,7 +319,7 @@ panels: [
     //lineColorField: "lineColor",
     lineColor:"#FF0000",
     negativeLineColor: "red",
-    negativeBase: 230,
+    negativeBase: highBound, 
   },{
     id: "g2",
     compareGraphType:"smoothedLine",
@@ -302,7 +331,7 @@ panels: [
     //lineColorField: "lineColor",
     lineColor:"#FF0000",
     negativeLineColor: "green",
-    negativeBase: 160,
+    negativeBase: lowBound, 
   }
    ],
   stockLegend: {
@@ -397,7 +426,10 @@ function drawTranscript(){
   var transcript = "";
   for(var i in transcriptData){
     var value = transcriptData[i].label;
+    //console.log("value: " + value);
+
     transcript += String(value).trim() + "<br/>";
+    //console.log(transcript);
   }
   var x = document.getElementById("transcriptdiv");
   x.innerHTML = transcript;
