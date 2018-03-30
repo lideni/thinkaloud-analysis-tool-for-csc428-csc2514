@@ -19,6 +19,8 @@ var standardDev = 0;
 var totalPitch = 0;
 var pitchMean = 0;
 var totalNumOfPitch = 0;
+var highBound = 0;
+var lowBound = 0;
 
 window.onload = function(){
   Tipped.create('.legend-label')
@@ -135,25 +137,6 @@ window.onload = function(){
   setTranscriptSelectionEventListener();
 };
 
-// hightlight high pitch portions of graph and text 
-// append error message is there a no data to be analyzed 
-function highPitchHighlight(){ 
-  
-
-};
-
-// hightlight low pitch portions of graph and text 
-// append error message is there a no data to be analyzed 
-function lowPitchHighlight(){
-  
-
-};
-
-// hightlight baseline average pitch portions of graph and text 
-// append error message is there a no data to be analyzed 
-function baseLineHighlight(){
-  
-};
 
 function updateOnMouseMove(event) {
   let width = $("#notes_timeline").width();
@@ -188,7 +171,7 @@ function loadTaskData () {  //load the audio when the UI is displayed
     processAudio();
 
   }
-
+  parseDataForStandardDev(task_data.data);
   [transcriptData, pitchData] = parseData(task_data.data);
 
 
@@ -198,13 +181,15 @@ function loadTaskData () {  //load the audio when the UI is displayed
     {
       console.log("data is ready...");
       graphLoaded = true; 
-      //console.log(pitchData);
       mChart = drawCharts();
       drawTranscript(); 
-      //console.log(transcriptData[90]);
-      //console.log(transcriptData[91]);
-      //console.log(transcriptData[92]);
-      console.log(standardDev);
+      pitchNum
+      document.getElementById("pitchNum").innerHTML = "<a id='boundaries'>" +
+                                                    "<font color='skyblue'> High Pitch Bound: " + Math.round(highBound) + "(HZ) </font>" + 
+                                                    "<font color='green'>Low Pitch Bound: " + Math.round(lowBound) + "(HZ) </font>" + 
+                                                    "<font color='purple'>Baseline Average: " + Math.round(pitchMean) + "(HZ)</font>" +
+                                                        "</a>"
+
     }
     else {
       setTimeout(myTimer, 500);
@@ -228,10 +213,28 @@ function processAudio() {
   timeline_end = audioDuration;
 }
 
+function parseDataForStandardDev(dataset_url){
+  AmCharts.loadFile(dataset_url, {}, function(data) {
+    inputdata = AmCharts.parseJSON(data);
+    for(var i = 0; i < inputdata.length; i++){
+      var temppitchData = inputdata[i].pitch;
+      for(var j = 0; j < temppitchData.length; j++){
+        totalPitch += parseFloat(temppitchData[j]);
+        totalNumOfPitch +=1;
+      }
+    }
+    standardDev = calculateStandardDeviation(totalPitch, totalNumOfPitch, inputdata);
+    highBound = pitchMean + standardDev;
+    lowBound =  pitchMean - standardDev;
+  });
+}
+
 function parseData(dataset_url) {
   var transcriptData = [];
   var pitchData = [];
-  
+  var numHigh = 0;
+  var numLow = 0;
+  var numSentencePitch = 0;
   AmCharts.loadFile(dataset_url, {}, function(data) {
     inputdata = AmCharts.parseJSON(data);
     for(var i = 0; i < inputdata.length; i++){
@@ -240,19 +243,31 @@ function parseData(dataset_url) {
       var value = inputdata[i].transcription;
       var numWords = value.split(" ").length;
       //console.log("numWords: " + numWords);
-      transcriptData.push({"start": start, "end": end, "label": String(value).trim()});
 
       var temppitchData = inputdata[i].pitch;
       for(var j = 0; j < temppitchData.length; j++){
         var time = start + j * (end - start) / temppitchData.length;
         pitchData.push({"time": time, "data":parseFloat(temppitchData[j]), "legendColor": AmCharts.randomColor, "label": "undefined"});
-        totalPitch += parseFloat(temppitchData[j]);
-        totalNumOfPitch +=1;
+        numSentencePitch += 1;
+        if (parseFloat(temppitchData[j]) >= (highBound)){
+          numHigh += 1;
+        }
+        if (parseFloat(temppitchData[j]) <= (lowBound)){
+          numLow += 1; 
+        }
       }
-    }
+      //using the number of high and low pitches in a sentence to give problem suggestions 
+      if((numLow /numSentencePitch) >= 0.08 || (numHigh /numSentencePitch) >= 0.15){
+        transcriptData.push({"start": start, "end": end, "label": String(value).trim(), "colour": "red"});
+      }
+      else{
+        transcriptData.push({"start": start, "end": end, "label": String(value).trim(), "colour": "black"});
+      }
+      numHigh = 0;
+      numLow = 0;
+      numSentencePitch = 0;
 
-    standardDev = calculateStandardDeviation(totalPitch, totalNumOfPitch, inputdata);
-    console.log("SD: " + standardDev);
+    }
   });
   return [transcriptData, pitchData];
 }
@@ -273,13 +288,10 @@ function calculateStandardDeviation(totalPitch, totalNumOfPitch, inputdata){
   return Math.sqrt(totalXMinMeanSq / (totalNumOfPitch - 1));
 }
 
+
 //draw a line graph of the feature (e.g., pitch)
 function drawCharts(){
   var chart = null;
-  var highBound = pitchMean + standardDev;
-  var lowBound =  pitchMean - standardDev;
-  console.log("high: " + highBound);
-  console.log("lowBound: " + lowBound);
   chart = AmCharts.makeChart("chartdiv", {
     type: "stock",
     "theme": "light",
@@ -426,11 +438,10 @@ function drawTranscript(){
   var transcript = "";
   for(var i in transcriptData){
     var value = transcriptData[i].label;
-    //console.log("value: " + value);
 
-    transcript += String(value).trim() + "<br/>";
-    //console.log(transcript);
+    transcript += "<font color=" + transcriptData[i].colour + ">" +String(value).trim() + "</font> <br/>";
   }
+  document.getElementById("textColour").innerHTML = "<b>Red coloured texts are suggested problems</b><br/>";
   var x = document.getElementById("transcriptdiv");
   x.innerHTML = transcript;
 }
