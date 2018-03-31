@@ -257,7 +257,7 @@ function parseData(dataset_url) {
         }
       }
       //using the number of high and low pitches in a sentence to give problem suggestions 
-      if((numLow /numSentencePitch) >= 0.25 || (numHigh /numSentencePitch) >= 0.25){
+      if((numLow /numSentencePitch) >= 0.4 || (numHigh /numSentencePitch) >= 0.15){
         transcriptData.push({"start": start, "end": end, "label": String(value).trim(), "colour": "red"});
       }
       else{
