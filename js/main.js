@@ -257,7 +257,7 @@ function parseData(dataset_url) {
         }
       }
       //using the number of high and low pitches in a sentence to give problem suggestions 
-      if((numLow /numSentencePitch) >= 0.08 || (numHigh /numSentencePitch) >= 0.15){
+      if((numLow /numSentencePitch) >= 0.25 || (numHigh /numSentencePitch) >= 0.25){
         transcriptData.push({"start": start, "end": end, "label": String(value).trim(), "colour": "red"});
       }
       else{
@@ -583,10 +583,10 @@ function updateTranscript(currentTimeInMS){
     //console.log("timestamp: " + e.chart.chartCursor.timestamp + " , start: " + start + ", end: " + end + " , word: " + value);
     if (currentTimeInMS >= start && currentTimeInMS <= end)
     {
-      transcript += "<span class='transcript-line highlight'>" + String(value).trim() + "<br/>" + "</span>";
+      transcript += "<span class='transcript-line highlight'> <font color=" + transcriptData[i].colour + ">" + String(value).trim() + "</font><br/>" + "</span>";
     }
     else {
-      transcript += "<span class='transcript-line'>" + String(value).trim() + "<br/>" + "</span>";
+      transcript += "<span class='transcript-line'><font color=" + transcriptData[i].colour + ">" + String(value).trim() + "</font><br/>" + "</span>";
     }
   }
 
@@ -613,10 +613,11 @@ function updateTranscriptOnSelection(startTime, endTime){
     if (start >= parseFloat(startTime) * 1000 && end <= parseFloat(endTime) * 1000)
     {
       //console.log("transcript: " + start + "; end: " + end);
-      transcript += "<span class='transcript-line highlight'>" + String(value).trim() + "<br/>" + "</span>";
+      transcript += "<span class='transcript-line highlight'><font color=" + transcriptData[i].colour + ">" + String(value).trim() + "</font><br/>" + "</span>";
+      
     }
     else {
-      transcript += "<span class='transcript-line'>" + String(value).trim() + "<br/>" + "</span>";
+      transcript += "<span class='transcript-line'><font color=" + transcriptData[i].colour + ">" + String(value).trim() + "</font><br/>" + "</span>";
     }
   }
 
