@@ -73,8 +73,10 @@ window.onload = function(){
     + "'></span>")
 
     $('#note-table').append(
-      "<tr class=note_"+ note.id + "><td>" + note.startTime + '</td>' +
-      "<td>" + note.endTime + '</td>' +
+      //"<tr class=note_"+ note.id + "><td>" + note.startTime + '</td>' +
+      //"<td>" + note.endTime + '</td>' +
+      "<tr class=note_"+ note.id + "><td>" + $('#start').val() + '</td>' +
+      "<td>" + $('#end').val() + '</td>' +
       "<td>" + note.prob + '</td>' +
       "<td>" + note.annotation + '</td>' +
       "<td><i class='fa fa-trash-o delete-note' aria-hidden='true'></i></tr>"
@@ -257,11 +259,16 @@ function parseData(dataset_url) {
         }
       }
       //using the number of high and low pitches in a sentence to give problem suggestions 
-      if((numHigh /numSentencePitch) >= 0.4 || (numLow /numSentencePitch) >= 0.1){
-        transcriptData.push({"start": start, "end": end, "label": String(value).trim(), "colour": "red"});
+      var percentHigh = Math.round(numHigh /numSentencePitch);
+      var percentLow = Math.round(numLow/numSentencePitch);
+      if((numHigh /numSentencePitch) >= 0.15) {
+        transcriptData.push({"start": start, "end": end, "label": String(value).trim(), "colour": "skyblue"});
       }
+      else if( (numLow /numSentencePitch) >= 0.15){
+         transcriptData.push({"start": start, "end": end, "label": String(value).trim(), "colour": "green"});
+       }
       else{
-        transcriptData.push({"start": start, "end": end, "label": String(value).trim(), "colour": "black"});
+        transcriptData.push({"start": start, "end": end, "label": String(value).trim(), "colour": "purple"});
       }
       numHigh = 0;
       numLow = 0;
@@ -441,7 +448,7 @@ function drawTranscript(){
 
     transcript += "<font color=" + transcriptData[i].colour + ">" +String(value).trim() + "</font> <br/>";
   }
-  document.getElementById("textColour").innerHTML = "<b>Red coloured texts are suggested problems</b><br/>";
+  document.getElementById("textColour").innerHTML = "<b>The color (blue, green, purple) corresponds to predominant pitch of the sentence (high, low, average) </b><br/>";
   var x = document.getElementById("transcriptdiv");
   x.innerHTML = transcript;
 }
